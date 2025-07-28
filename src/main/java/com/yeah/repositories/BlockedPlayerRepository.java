@@ -2,9 +2,12 @@ package com.yeah.repositories;
 
 import com.yeah.entities.BlockedPlayer;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
 public interface BlockedPlayerRepository extends JpaRepository<BlockedPlayer, Long> {
-    List<BlockedPlayer> findByBlockMonth(int blockMonth);
+    @Query("SELECT b.playerName FROM BlockedPlayer b WHERE b.blockWeek IN :weeks")
+    List<String> findBlockedPlayersByWeeks(@Param("weeks") List<Integer> weeks);
 }

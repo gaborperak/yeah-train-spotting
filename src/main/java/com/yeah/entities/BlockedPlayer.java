@@ -13,16 +13,15 @@ public class BlockedPlayer {
     @Column(name = "player_name", nullable = false)
     private String playerName;
 
-    @Column(name = "block_month", nullable = false)
-    private int blockMonth;
+    @Column(name = "block_week", nullable = false)
+    private int blockWeek;
 
     // Default constructor for JPA
     public BlockedPlayer() {}
 
-    public BlockedPlayer(Long id, String playerName, int blockMonth) {
-        this.id = id;
+    public BlockedPlayer(String playerName, int blockWeek) {
         this.playerName = playerName;
-        this.blockMonth = blockMonth;
+        this.blockWeek = blockWeek;
     }
 
     // Getters and setters
@@ -42,11 +41,11 @@ public class BlockedPlayer {
         this.playerName = playerName;
     }
 
-    public int getBlockMonth() {
-        return blockMonth;
+    public int getBlockWeek() {
+        return blockWeek;
     }
 
-    public void setBlockMonth(int blockMonth) {
-        this.blockMonth = blockMonth;
+    public void setBlockWeek(int blockWeek) {
+        this.blockWeek = blockWeek;
     }
 }

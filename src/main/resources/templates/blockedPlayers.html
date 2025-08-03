@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Blocked Players</title>
+    <link rel="stylesheet" th:href="@{/css/shared-table.css}" href="/css/shared-table.css" />
+</head>
+<body>
+<h1>Blocked Players</h1>
+<table>
+    <thead>
+    <tr>
+        <th>Player Name</th>
+        <th>Block Week</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="player : ${blockedPlayers}">
+        <td th:text="${player.playerName}"></td>
+        <td th:text="${player.blockWeek}"></td>
+    </tr>
+    </tbody>
+</table>
+</body>
+</html>

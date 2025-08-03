@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>YEAH Train Winners</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f4f6f8;
+            margin: 0;
+            padding: 2rem;
+        }
+        h1 {
+            color: #22223b;
+            margin-bottom: 1.5rem;
+        }
+        table {
+            width: 50;
+            border-collapse: collapse;
+            background: #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border-radius: 8px;
+            overflow: hidden;
+            margin: 0 auto;
+        }
+        th, td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            font-size: 2rem;
+        }
+        th {
+            background: #4f8ef7;
+            color: #fff;
+            font-weight: 600;
+        }
+        tr:nth-child(even) {
+            background: #f0f4fa;
+        }
+        tr:hover {
+            background: #e2eafc;
+        }
+    </style>
+</head>
+<body>
+<h1>Welcome to YEAH Train Winners</h1>
+
+<ul>
+    <li><a th:href="@{/top30}">Top 30 Players</a></li>
+    <li><a th:href="@{/winstreaks}">Player Winstreaks</a></li>
+    <li>
+        <form th:action="@{/top30/weekly}" method="get" style="display:inline;">
+            <label for="week">Weekly Top 30 (enter week):</label>
+            <input type="number" id="week" name="week" min="1" required>
+            <button type="submit">Go</button>
+        </form>
+    </li>
+    <li><a th:href="@{/uploadNames}">Upload top30 players</a></li>
+    <li><a th:href="@{/trainWinners}">Train winners</a></li>
+    <li><a th:href="@{/blockedPlayers}">Blocked players</a></li>
+    <li><a th:href="@{/drawWinners}">Draw Winners</a></li>
+</ul>
+</body>
+</html>

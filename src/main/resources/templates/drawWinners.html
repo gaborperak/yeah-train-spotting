@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Draw Winners</title>
+    <link rel="stylesheet" th:href="@{/css/shared-table.css}" href="/css/shared-table.css" />
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f4f6f8;
+            margin: 0;
+            padding: 2rem;
+        }
+        h1 {
+            color: #22223b;
+            margin-bottom: 1.5rem;
+        }
+        table {
+            width: 50;
+            border-collapse: collapse;
+            background: #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border-radius: 8px;
+            overflow: hidden;
+            margin: 0 auto;
+        }
+        th, td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            font-size: 2rem;
+        }
+        th {
+            background: #4f8ef7;
+            color: #fff;
+            font-weight: 600;
+        }
+        tr:nth-child(even) {
+            background: #f0f4fa;
+        }
+        tr:hover {
+            background: #e2eafc;
+        }
+    </style>
+</head>
+<body>
+<h1>Draw Winners</h1>
+<form id="drawForm">
+    <label for="week">Enter week:</label>
+    <input type="number" id="week" name="week" min="1" max="52" required><br><br>
+    <label for="password">Password:</label>
+    <input type="password" id="password" name="password" required><br><br>
+    <button type="submit">Draw</button>
+</form>
+<p id="message"></p>
+<div id="winnersTable"></div>
+<script>
+    document.getElementById('drawForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const week = document.getElementById('week').value;
+        const password = document.getElementById('password').value;
+        fetch('/api/train-scheduler/draw-winners/' + week, {
+            method: 'POST',
+            headers: {
+                'Authorization': password
+            }
+        })
+        .then(response => response.ok ? response.json() : response.text().then(text => { throw new Error(text); }))
+        .then(data => {
+            if (Array.isArray(data)) {
+                let html = '<table><thead><tr><th>Player Name</th><th>Week</th><th>Day</th></tr></thead><tbody>';
+                data.forEach(winner => {
+                    html += `<tr><td>${winner.playerName}</td><td>${winner.week}</td><td>${winner.day}</td></tr>`;
+                });
+                html += '</tbody></table>';
+                document.getElementById('winnersTable').innerHTML = html;
+                document.getElementById('message').innerText = 'Draw successful!';
+            } else {
+                document.getElementById('message').innerText = data;
+            }
+        })
+        .catch(err => {
+            document.getElementById('winnersTable').innerHTML = '';
+            const msg = err.message && err.message.trim() ? err.message : 'Unauthorized or unknown error';
+            document.getElementById('message').innerText = 'Error: ' + msg;
+        });
+    });
+</script>
+</body>
+</html>

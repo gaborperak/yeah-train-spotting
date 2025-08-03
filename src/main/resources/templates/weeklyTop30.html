@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Weekly Top 30 Players</title>
+    <link rel="stylesheet" th:href="@{/css/shared-table.css}" href="/css/shared-table.css" />
+</head>
+<body>
+<h1>Top 30 Players for Week <span th:text="${week}"></span></h1>
+<table>
+    <thead>
+    <tr>
+        <th>Player Name</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="player : ${weeklyPlayers}">
+        <td th:text="${player.playerName}"></td>
+    </tr>
+    </tbody>
+</table>
+</body>
+</html>

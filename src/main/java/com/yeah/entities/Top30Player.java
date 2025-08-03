@@ -10,9 +10,10 @@ public class Top30Player {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "week", nullable = false)
     private int week;
 
-    @Column(name = "player_name", nullable = false)
+    @Column(name = "player_name", nullable = false, length = 100)
     private String playerName;
 
     // Constructors, getters, and setters

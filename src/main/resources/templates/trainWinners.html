@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Train Winners</title>
+    <link rel="stylesheet" th:href="@{/css/shared-table.css}" href="/css/shared-table.css" />
+</head>
+<body>
+<h1>Train Winners</h1>
+<table>
+    <thead>
+    <tr>
+        <th>Player Name</th>
+        <th>Week</th>
+        <th>Day</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="winner : ${allTrainWinners}">
+        <td th:text="${winner.playerName}"></td>
+        <td th:text="${winner.week}"></td>
+        <td th:text="${winner.day}"></td>
+    </tr>
+    </tbody>
+</table>
+</body>
+</html>

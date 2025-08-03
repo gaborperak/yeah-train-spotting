@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Upload Names</title>
+</head>
+<body>
+<h1>Upload 30 Names</h1>
+<form id="uploadForm">
+    <label for="names">Enter 30 names (one per line):</label><br>
+    <textarea id="names" name="names" rows="15" cols="40"></textarea><br><br>
+    <label for="week">Select week:</label>
+    <select id="week" name="week">
+        <option th:each="w : ${weeks}" th:value="${w}" th:text="${w}"></option>
+    </select><br><br>
+    <label for="password">Password:</label>
+    <input type="password" id="password" name="password" /><br><br>
+    <button type="submit">Upload</button>
+</form>
+<p id="message"></p>
+<script>
+    document.getElementById('uploadForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const names = document.getElementById('names').value.split('\n').map(n => n.trim()).filter(n => n);
+        const week = parseInt(document.getElementById('week').value, 10);
+        const password = document.getElementById('password').value;
+        fetch('/api/top30/upload', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': password
+            },
+            body: JSON.stringify({ week: week, playerNames: names })
+        })
+            .then(response => response.text())
+            .then(data => document.getElementById('message').innerText = data)
+            .catch(err => document.getElementById('message').innerText = 'Error: ' + err);
+    });
+</script>
+</body>
+</html>

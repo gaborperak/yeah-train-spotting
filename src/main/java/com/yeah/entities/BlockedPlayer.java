@@ -10,7 +10,7 @@ public class BlockedPlayer {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "player_name", nullable = false)
+    @Column(name = "player_name", nullable = false, length = 100)
     private String playerName;
 
     @Column(name = "block_week", nullable = false)

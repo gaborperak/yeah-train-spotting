@@ -1,5 +1,6 @@
 package com.yeah.apicontroller;
 
+import com.google.common.hash.Hashing;
 import com.yeah.dto.Top30PlayersRequest;
 import com.yeah.entities.PlayerWinStreak;
 import com.yeah.entities.Top30Player;
@@ -14,8 +15,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -46,13 +49,18 @@ public class Top30PlayerController {
 
     // Increment win streak for each uploaded player after saving them
     @PostMapping("/upload")
-    public ResponseEntity<String> uploadTop30Players(@RequestBody Top30PlayersRequest request, @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
-        final String requiredPasswordHash = "4bf5a4735b2e4276d9ca52608ddcc6e5b153db9178e93e88c80b2109280fa919";
-        if (authHeader == null || !hashMatches(authHeader, requiredPasswordHash)) {
+    public ResponseEntity<String> uploadTop30Players(@RequestBody Top30PlayersRequest request, @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) throws NoSuchAlgorithmException {
+        String sha256hex = Hashing.sha256()
+                .hashString(authHeader, StandardCharsets.UTF_8)
+                .toString();
+
+
+        final String requiredPassword = "4bf5a4735b2e4276d9ca52608ddcc6e5b153db9178e93e88c80b2109280fa919";
+        if (sha256hex == null || !sha256hex.equals(requiredPassword)) {
             return ResponseEntity.status(401).body("Unauthorized: Missing or invalid Authorization header.");
         }
-        if (request.getWeek() <= 0 || request.getWeek() > 52) {
-            return ResponseEntity.badRequest().body("Invalid week number. Week can only be 1-52.");
+        if (request.getWeek() <= 0 || request.getWeek() > 104) {
+            return ResponseEntity.badRequest().body("Invalid week number. Week can only be 1-104.");
         }
         if (request.getPlayerNames() == null || request.getPlayerNames().isEmpty()) {
             return ResponseEntity.badRequest().body("Player names list cannot be empty.");
@@ -75,8 +83,8 @@ public class Top30PlayerController {
 
     @PutMapping("/update/{week}")
     public ResponseEntity<String> updateTop30Players(@PathVariable int week, @RequestBody Top30PlayersRequest request) {
-        if (request.getWeek() <= 0 || request.getWeek() > 52) {
-            return ResponseEntity.badRequest().body("Invalid week number. Week can only be 1-52.");
+        if (request.getWeek() <= 0 || request.getWeek() > 104) {
+            return ResponseEntity.badRequest().body("Invalid week number. Week can only be 1-104.");
         }
         if (request.getPlayerNames() == null || request.getPlayerNames().isEmpty()) {
             return ResponseEntity.badRequest().body("Player names list cannot be empty.");
@@ -95,19 +103,5 @@ public class Top30PlayerController {
         }
         top30PlayerService.updateTop30Players(week, request);
         return ResponseEntity.ok("Top 30 players updated successfully for week " + week);
-    }
-
-    private boolean hashMatches(String password, String expectedHash) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hashBytes = digest.digest(password.getBytes());
-            StringBuilder sb = new StringBuilder();
-            for (byte b : hashBytes) {
-                sb.append(String.format("%02x", b));
-            }
-            return sb.toString().equals(expectedHash);
-        } catch (NoSuchAlgorithmException e) {
-            return false;
-        }
     }
 }

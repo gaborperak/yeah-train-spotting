@@ -9,6 +9,8 @@ import com.yeah.repositories.PlayerWinStreakRepository;
 import com.yeah.repositories.Top30PlayerRepository;
 import com.yeah.repositories.TrainWinnerRepository;
 import jakarta.annotation.PostConstruct;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Service;
 
@@ -16,13 +18,18 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @DependsOn("dataSeeder")
 @Service
 public class DrawService {
+
+    // Add this at the top of your class
+    private static final Logger logger = LoggerFactory.getLogger(DrawService.class);
 
     private final Top30PlayerRepository top30PlayerRepository;
     private final TrainWinnerRepository trainWinnerRepository;
@@ -41,6 +48,7 @@ public class DrawService {
 
     @PostConstruct
     public void recalculateAllWinstreaks() {
+        playerWinStreakRepository.deleteAll();
         Integer latestWeek = top30PlayerRepository.findMaxWeek();
         Integer minWeek = top30PlayerRepository.findMinWeek();
         if (latestWeek == null) return;
@@ -50,20 +58,43 @@ public class DrawService {
                 .map(Top30Player::getPlayerName)
                 .collect(Collectors.toSet());
 
+        // from this filter out all players with their name starting with skip
+        allPlayerNames = allPlayerNames.stream()
+                .filter(name -> !name.toLowerCase().startsWith("skip"))
+                .collect(Collectors.toSet());
+
+        List<Integer> last4Weeks = List.of(latestWeek, latestWeek - 1, latestWeek - 2, latestWeek - 3);
+        List<Integer> allWeeks = IntStream.rangeClosed(minWeek, latestWeek)
+                .boxed()
+                .toList();
+
+        List<String> blockedLast4Weeks = blockedPlayerRepository.findBlockedPlayersByWeeks(last4Weeks);
+        List<Object[]> blockHistory = blockedPlayerRepository.findBlockedPlayersAndWeeksByWeeks(allWeeks);
+
+        int winstreak;
         for (String playerName : allPlayerNames) {
-            // Check if blocked in the latest 4 weeks
-            List<Integer> last4Weeks = List.of(latestWeek, latestWeek - 1, latestWeek - 2, latestWeek - 3);
-            List<String> blocked = trainWinnerRepository.findPlayerNamesByWeeks(last4Weeks);
-            int winstreak = 1;
-            if (!blocked.contains(playerName)) {
-                winstreak = 1;
-                int week = latestWeek - 1;
+            if (!blockedLast4Weeks.contains(playerName)) {
+                winstreak = 0;
+                // Get the first block week for the player (if any)
+                Optional<Integer> firstBlockedWeekIfAny = blockHistory.stream()
+                        .filter(arr -> arr[0].equals(playerName))
+                        .map(arr -> (Integer) arr[1])
+                        .findFirst();
+
+
+                int week = latestWeek;
                 while (week >= minWeek) {
                     Top30Player prev = top30PlayerRepository.findByWeekAndPlayerName(week, playerName);
-                    if (prev == null) break;
-                    List<Integer> prevLast4Weeks = List.of(week, week - 1, week - 2, week - 3);
-                    List<String> prevBlocked = trainWinnerRepository.findPlayerNamesByWeeks(prevLast4Weeks);
-                    if (prevBlocked.contains(playerName)) break;
+                    if (prev == null) {
+                        week--;
+                        continue;
+                    }
+
+                    // in case week 36 is calculated and player was blocked in 34, we should stop counting streak at 37
+                    if (firstBlockedWeekIfAny.isPresent() && week <= firstBlockedWeekIfAny.get() + 3) {
+                        break; // Stop counting streak if blocked in this week or any later week
+                    }
+
                     winstreak++;
                     week--;
                 }
@@ -88,6 +119,7 @@ public class DrawService {
     }
 
     public List<TrainWinner> drawWinners(int currentWeek, LocalDate drawDate) {
+        recalculateAllWinstreaks();
 
         // Check if winners already exist for the given week
         List<TrainWinner> existingWinners = trainWinnerRepository.findByWeek(currentWeek);
@@ -111,30 +143,63 @@ public class DrawService {
                 .filter(player -> !finalBlocked4weeks.contains(player.getPlayerName()))
                 .toList();
 
-        //less than 7
+        List<Top30Player> top30PlayersBlocked = top30Players.stream()
+                .filter(player -> finalBlocked4weeks.contains(player.getPlayerName()))
+                .toList();
+
+        logger.info("Top 30 players that are not blocked and are eligible for drawing: {}", top30PlayersFiltered.stream()
+                .map(Top30Player::getPlayerName)
+                .collect(Collectors.joining(", ")));
+
+        logger.info("Players that were top 30 but got filtered out because they won in the last 4 weeks "
+                + "and are blocked: {}", top30PlayersBlocked.stream()
+                .map(Top30Player::getPlayerName)
+                .collect(Collectors.joining(", ")));
+
         if (top30PlayersFiltered.size() < 7) {
+            //less than 7
+            logger.info("There are not enough players to draw from: {}",
+                    top30PlayersFiltered.size());
+
+            logger.info("Relaxing the rule to allow drawing from players blocked in the last 3 weeks if less than 7 players are available");
+
             List<Integer> last3weeks = List.of(currentWeek - 1, currentWeek - 2, currentWeek - 3);
             blocked = blockedPlayerRepository.findBlockedPlayersByWeeks(last3weeks);
             List<String> finalBlocked3weeks = blocked;
             top30PlayersFiltered = top30Players.stream()
                     .filter(player -> !finalBlocked3weeks.contains(player.getPlayerName()))
                     .toList();
+
+            logger.info("Top 30 players that are not blocked and are eligible for drawing after relaxing the 4 week ban to 3 week: {}", top30PlayersFiltered.stream()
+                    .map(Top30Player::getPlayerName)
+                    .collect(Collectors.joining(", ")));
         }
 
         // Build the draw pool: each player appears as many times as their winstreak
         List<Top30Player> drawPool = new ArrayList<>();
         for (Top30Player player : top30PlayersFiltered) {
-                int winStreak = playerWinStreakRepository
-                        .findByPlayerName(player.getPlayerName())
-                        .map(PlayerWinStreak::getWinStreak)
-                        .orElse(1);
-                for (int i = 0; i < winStreak; i++) {
-                    drawPool.add(player);
-                }
+            int winStreak = playerWinStreakRepository
+                    .findByPlayerName(player.getPlayerName())
+                    .map(PlayerWinStreak::getWinStreak)
+                    .orElse(1);
+            for (int i = 0; i < winStreak; i++) {
+                drawPool.add(player);
+            }
         }
+
+        //log out the draw pool size and contents
+        logger.info("Draw pool size: {}", drawPool.size());
+        logger.info("Draw pool contents: {}", drawPool.stream()
+                .map(Top30Player::getPlayerName)
+                .collect(Collectors.joining(", ")));
 
         // Shuffle and pick up to 7 unique winners
         Collections.shuffle(drawPool);
+
+        logger.info("Draw pool contents after shuffle: {}", drawPool.stream()
+                .map(Top30Player::getPlayerName)
+                .collect(Collectors.joining(", ")));
+
         List<Top30Player> uniqueWinners = drawPool.stream()
                 .distinct()
                 .limit(7)

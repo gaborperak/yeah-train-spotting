@@ -52,4 +52,3 @@ public class Top30PlayerService {
         top30PlayerRepository.saveAll(players);
     }
 }
-

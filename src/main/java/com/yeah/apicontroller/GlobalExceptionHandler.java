@@ -23,4 +23,3 @@ public class GlobalExceptionHandler {
         return ex.getMessage() != null ? ex.getMessage() : "Internal server error";
     }
 }
-

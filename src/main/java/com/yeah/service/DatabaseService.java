@@ -30,4 +30,3 @@ public class DatabaseService {
         playerWinStreakRepository.deleteAll();
     }
 }
-

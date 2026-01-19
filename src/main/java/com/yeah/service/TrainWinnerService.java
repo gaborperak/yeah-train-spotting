@@ -23,8 +23,8 @@ public class TrainWinnerService {
     }
 
     public List<TrainWinner> findAllTrainWinnersSortedByWeekDesc() {
-        List<TrainWinner> winners = findAllTrainWinners();
-        winners.sort((a, b) -> Integer.compare(b.getWeek(), a.getWeek()));
-        return winners;
+        List<TrainWinner> players = trainWinnerRepository.findAll();
+        players.sort((a, b) -> Integer.compare(b.getWeek(), a.getWeek()));
+        return players;
     }
 }

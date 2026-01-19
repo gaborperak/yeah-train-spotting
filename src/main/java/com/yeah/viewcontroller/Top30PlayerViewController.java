@@ -21,7 +21,8 @@ public class Top30PlayerViewController {
     // In Top30PlayerViewController.java
     @GetMapping("/top30")
     public String showTop30Players(Model model) {
-        List<Top30Player> players = drawService.getTop30PlayersSortedByWeekDesc();
+        List<Top30Player> players = drawService.getTop30Players();
+        players.sort((a, b) -> Integer.compare(b.getWeek(), a.getWeek())); // Descending by week
         model.addAttribute("allTop30Players", players);
         return "top30";
     }

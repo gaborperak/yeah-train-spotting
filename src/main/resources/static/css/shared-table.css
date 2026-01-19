@@ -1,36 +1,42 @@
-body {
-    font-family: 'Segoe UI', Arial, sans-serif;
-    background: #f4f6f8;
-    margin: 0;
-    padding: 2rem;
-}
-h1 {
-    color: #22223b;
-    margin-bottom: 1.5rem;
-}
-table {
+/* src/main/resources/static/css/shared-table.css */
+
+.shared-table {
     width: 50%;
+    margin: 0 auto;
     border-collapse: collapse;
     background: #fff;
     box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     border-radius: 8px;
     overflow: hidden;
-    margin: 0 auto;
+    font-family: 'Segoe UI', Arial, sans-serif;
 }
-th, td {
+
+.shared-table th,
+.shared-table td {
     padding: 0.75rem 1rem;
     text-align: left;
     font-size: 2rem;
 }
-th {
+
+.shared-table th {
     background: #4f8ef7;
     color: #fff;
     font-weight: 600;
 }
-tr:nth-child(even) {
+
+.shared-table tr:nth-child(even) {
     background: #f0f4fa;
 }
-tr:hover {
+
+.shared-table tr:hover {
     background: #e2eafc;
+    transition: background 0.2s;
 }
 
+.shared-table caption {
+    caption-side: top;
+    font-size: 1.2em;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: #22223b;
+}
